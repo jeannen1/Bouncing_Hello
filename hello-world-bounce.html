@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bouncing Hello World</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: default;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    #wrap {
+      position: absolute;
+      left: 0;
+      top: 0;
+      will-change: transform;
+      text-align: center;
+      pointer-events: none;
+      transform: translate3d(0,0,0);
+    }
+
+    #hello {
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+      line-height: 1.1;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      white-space: nowrap;
+      margin: 0;
+      padding: 0;
+      filter: drop-shadow(0 0 10px rgba(0,0,0,0.35));
+    }
+
+    #lang {
+      margin-top: 4px;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.4px;
+      opacity: 0.8;
+      white-space: nowrap;
+    }
+
+    body.ended #wrap {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap" aria-hidden="true">
+    <div id="hello">Hello world</div>
+    <div id="lang">English</div>
+  </div>
+
+  <script>
+    (() => {
+      const wrap = document.getElementById('wrap');
+      const helloEl = document.getElementById('hello');
+      const langEl = document.getElementById('lang');
+
+      const LANGS = [
+        { name: "English", text: "Hello world", dir: "ltr" },
+        { name: "Spanish", text: "Hola mundo", dir: "ltr" },
+        { name: "French", text: "Bonjour le monde", dir: "ltr" },
+        { name: "German", text: "Hallo Welt", dir: "ltr" },
+        { name: "Italian", text: "Ciao mondo", dir: "ltr" },
+        { name: "Portuguese", text: "Olá mundo", dir: "ltr" },
+        { name: "Dutch", text: "Hallo wereld", dir: "ltr" },
+        { name: "Swedish", text: "Hej världen", dir: "ltr" },
+        { name: "Polish", text: "Witaj świecie", dir: "ltr" },
+        { name: "Turkish", text: "Merhaba dünya", dir: "ltr" },
+        { name: "Russian", text: "Привет, мир", dir: "ltr" },
+        { name: "Greek", text: "Γεια σου κόσμε", dir: "ltr" },
+        { name: "Hebrew", text: "שלום עולם", dir: "rtl" },
+        { name: "Arabic", text: "مرحبا بالعالم", dir: "rtl" },
+        { name: "Hindi", text: "नमस्ते दुनिया", dir: "ltr" },
+        { name: "Bengali", text: "হ্যালো বিশ্ব", dir: "ltr" },
+        { name: "Thai", text: "สวัสดีชาวโลก", dir: "ltr" },
+        { name: "Japanese", text: "こんにちは世界", dir: "ltr" },
+        { name: "Korean", text: "안녕하세요 세계", dir: "ltr" },
+        { name: "Chinese (Simplified)", text: "你好，世界", dir: "ltr" },
+      ];
+
+      function shuffle(array) {
+        const a = array.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function randomVibrantColor() {
+        const h = Math.floor(Math.random() * 360);
+        const s = 90 + Math.random() * 10;
+        const l = 55 + Math.random() * 10;
+        return `hsl(${h} ${s}% ${l}%)`;
+      }
+
+      let ended = false;
+
+      // 20 per run, new random order each run
+      let order = shuffle(LANGS.map((_, idx) => idx));
+      let langPos = 0;
+
+      function applyLanguage(idx) {
+        const entry = LANGS[idx];
+        helloEl.textContent = entry.text;
+        langEl.textContent = entry.name;
+        wrap.dir = entry.dir || "ltr";
+      }
+
+      function nextLanguage() {
+        if (ended) return;
+        langPos++;
+        if (langPos >= order.length) {
+          order = shuffle(LANGS.map((_, idx) => idx));
+          langPos = 0;
+        }
+        applyLanguage(order[langPos]);
+      }
+
+      applyLanguage(order[langPos]);
+
+      let currentColor = randomVibrantColor();
+      helloEl.style.color = currentColor;
+      langEl.style.color = currentColor;
+
+      function setNewColor() {
+        currentColor = randomVibrantColor();
+        helloEl.style.color = currentColor;
+        langEl.style.color = currentColor;
+      }
+
+      // Motion
+      let x = 50, y = 50;
+      const speed = 110; // px/s
+      let angle = (Math.PI / 6) + (Math.random() * (Math.PI / 5)); // ~30-66 degrees
+      const sx = Math.random() < 0.5 ? -1 : 1;
+      const sy = Math.random() < 0.5 ? -1 : 1;
+      let vx = Math.cos(angle) * speed * sx;
+      let vy = Math.sin(angle) * speed * sy;
+
+      const bounds = { vw: innerWidth, vh: innerHeight, w: 0, h: 0 };
+
+      function measure() {
+        bounds.vw = innerWidth;
+        bounds.vh = innerHeight;
+        const rect = wrap.getBoundingClientRect();
+        bounds.w = rect.width;
+        bounds.h = rect.height;
+
+        x = Math.min(Math.max(0, x), Math.max(0, bounds.vw - bounds.w));
+        y = Math.min(Math.max(0, y), Math.max(0, bounds.vh - bounds.h));
+      }
+
+      function render() {
+        wrap.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      }
+
+      function initPosition() {
+        measure();
+        x = (bounds.vw - bounds.w) * (0.45 + (Math.random() - 0.5) * 0.1);
+        y = (bounds.vh - bounds.h) * (0.45 + (Math.random() - 0.5) * 0.1);
+        render();
+      }
+
+      // Debounce wall-hit changes so corners only count as one change.
+      let lastBounceAt = 0;
+      const BOUNCE_COOLDOWN_MS = 120;
+
+      function onBounce() {
+        const now = performance.now();
+        if (now - lastBounceAt < BOUNCE_COOLDOWN_MS) return;
+        lastBounceAt = now;
+
+        setNewColor();
+        nextLanguage();
+
+        // Re-measure because different languages have different widths/heights,
+        // then clamp position within bounds.
+        requestAnimationFrame(() => {
+          if (ended) return;
+          measure();
+          render();
+        });
+      }
+
+      let lastT = performance.now();
+
+      function step(t) {
+        if (ended) return;
+
+        let dt = (t - lastT) / 1000;
+        lastT = t;
+        dt = Math.min(dt, 0.033);
+
+        x += vx * dt;
+        y += vy * dt;
+
+        const maxX = bounds.vw - bounds.w;
+        const maxY = bounds.vh - bounds.h;
+
+        let bounced = false;
+
+        if (x <= 0) {
+          x = 0;
+          vx = Math.abs(vx);
+          bounced = true;
+        } else if (x >= maxX) {
+          x = maxX;
+          vx = -Math.abs(vx);
+          bounced = true;
+        }
+
+        if (y <= 0) {
+          y = 0;
+          vy = Math.abs(vy);
+          bounced = true;
+        } else if (y >= maxY) {
+          y = maxY;
+          vy = -Math.abs(vy);
+          bounced = true;
+        }
+
+        if (bounced) onBounce();
+
+        render();
+        requestAnimationFrame(step);
+      }
+
+      function onKeyDown(e) {
+        if (e.key === "Escape") {
+          ended = true;
+          document.body.classList.add("ended");
+        }
+      }
+
+      window.addEventListener('resize', () => {
+        if (ended) return;
+        measure();
+        render();
+      }, { passive: true });
+
+      window.addEventListener('keydown', onKeyDown);
+
+      // Kick off
+      initPosition();
+      requestAnimationFrame((t) => {
+        lastT = t;
+        measure();
+        requestAnimationFrame(step);
+      });
+    })();
+  </script>
+</body>
+</html>
